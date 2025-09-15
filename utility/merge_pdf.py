@@ -2,8 +2,8 @@ from pypdf import PdfWriter
 import glob
 import os
 
-path = "G:\Мои документы\Отсканированные документы\\"
-num = 5
+path = "G:/Мои документы/Отсканированные документы/Обновлённое/М/"
+num = 4
 
 pdfs = []
 
