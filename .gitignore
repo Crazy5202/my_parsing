@@ -1,3 +1,5 @@
 mongodb_data/*
 *.html
 *.txt
+*.png
+.vscode
