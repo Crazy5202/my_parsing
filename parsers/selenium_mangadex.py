@@ -7,7 +7,6 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 from random import uniform
 from selenium_stealth import stealth
-import requests
 import base64
 import os
 
@@ -46,7 +45,7 @@ js = """
 try:
     wait = WebDriverWait(driver, 10)
 
-    driver.get("https://mangadex.org/chapter/5fdc219f-f23f-4d07-9a43-9c2ca18c33f4")
+    driver.get("https://mangadex.org/chapter/4696b45a-ac45-48ae-a151-afdf63a5d3ca")
 
     open_menu_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-chapter > div.reader--header.hide.md--reader-header > div.reader--header-meta > div.reader--meta.menu > svg"))) 
     open_menu_button.click()
@@ -72,12 +71,20 @@ try:
 
         chapter_num_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-chapter > div.reader--header.hide.ls.md--reader-header > div.reader--header-meta > div.reader--meta.chapter")))
 
-        chapter_num = chapter_num_elem.text.split('.', 2)[2].replace(' ','').replace('.', ',')
+        # chapter_split = chapter_num_elem.text.split('.', 2)
+
+        # chapter_num = chapter_split[len(chapter_split)-1].replace(' ','').replace('.', ',')
+
+        chapter_num = chapter_num_elem.text.split("Ch.")[1].replace(' ','').replace('.', ',')
 
         if (chapter_num == prev_chapter_num):
             break
 
         prev_chapter_num = chapter_num
+
+        chapter_dir = os.path.join(save_dir, chapter_num)
+
+        os.makedirs(chapter_dir, exist_ok=True)
 
         imgs = wait.until(EC.visibility_of_all_elements_located((By.CLASS_NAME, "img")))
 
@@ -92,7 +99,7 @@ try:
                 
                 image_data = base64.b64decode(base64_data)
                 
-                with open(os.path.join(save_dir, f"{chapter_num}_{page_counter}.png"), "wb") as f:
+                with open(os.path.join(chapter_dir, f"{chapter_num}_{page_counter}.png"), "wb") as f:
                     f.write(image_data)
 
             page_counter += 1
