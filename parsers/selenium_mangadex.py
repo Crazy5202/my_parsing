@@ -24,7 +24,7 @@ stealth(driver,
     fix_hairline=True,
 )
 
-chapter_counter = 1
+# chapter_counter = 1
 page_counter = 1
 
 js = """
@@ -46,7 +46,7 @@ js = """
 try:
     wait = WebDriverWait(driver, 10)
 
-    driver.get("https://mangadex.org/chapter/61394a0e-6600-44d5-b00f-27fa29a9932b")
+    driver.get("https://mangadex.org/chapter/5fdc219f-f23f-4d07-9a43-9c2ca18c33f4")
 
     open_menu_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-chapter > div.reader--header.hide.md--reader-header > div.reader--header-meta > div.reader--meta.menu > svg"))) 
     open_menu_button.click()
@@ -64,7 +64,20 @@ try:
 
     os.makedirs(save_dir, exist_ok=True)
 
+    prev_chapter_num = "0"
+
+    chapter_num = "-1"
+
     while(True):
+
+        chapter_num_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-chapter > div.reader--header.hide.ls.md--reader-header > div.reader--header-meta > div.reader--meta.chapter")))
+
+        chapter_num = chapter_num_elem.text.split('.', 2)[2].replace(' ','').replace('.', ',')
+
+        if (chapter_num == prev_chapter_num):
+            break
+
+        prev_chapter_num = chapter_num
 
         imgs = wait.until(EC.visibility_of_all_elements_located((By.CLASS_NAME, "img")))
 
@@ -79,7 +92,7 @@ try:
                 
                 image_data = base64.b64decode(base64_data)
                 
-                with open(os.path.join(save_dir, f"{chapter_counter}_{page_counter}.png"), "wb") as f:
+                with open(os.path.join(save_dir, f"{chapter_num}_{page_counter}.png"), "wb") as f:
                     f.write(image_data)
 
             page_counter += 1
@@ -87,14 +100,15 @@ try:
         btn_chapter = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#chapter-selector > a:nth-child(3)")))
         btn_chapter.click()
 
-        chapter_counter += 1
+        #chapter_counter += 1
         page_counter = 1
 
         time.sleep(uniform(3.0, 5.0))
+
+    print(f"Парсинг закончен на главе {chapter_num}!")
     
 except Exception as e:
     print(f"Произошла ошибка: {e}")
 
 finally:
-    time.sleep(5)
     driver.quit()
