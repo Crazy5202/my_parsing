@@ -24,10 +24,6 @@ stealth(driver,
     fix_hairline=True,
 )
 
-save_dir = os.path.join(os.getcwd(), "manga")
-
-os.makedirs(save_dir, exist_ok=True)
-
 chapter_counter = 1
 page_counter = 1
 
@@ -55,43 +51,32 @@ try:
     open_menu_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-chapter > div.reader--header.hide.md--reader-header > div.reader--header-meta > div.reader--meta.menu > svg"))) 
     open_menu_button.click()
 
-    #btn_next = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div:nth-child(3) > button:nth-child(3)")))
-
-    #btn_next = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-chapter > div.min-w-0.relative.pages-wrap.md--reader-pages > div.overflow-x-auto.flex.items-center.h-full.select-none > div")))
-
     btn_scroll = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div.flex.flex-col.gap-2 > button:nth-child(1)")))
 
     for i in range(2):
         btn_scroll.click()
         time.sleep(1.0)
 
-    #btn_fit = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div.flex.flex-col.gap-2 > div:nth-child(2) > button.flex-grow.mr-2.rounded.custom-opacity.relative.md-btn.flex.items-center.px-3.overflow-hidden.accent.px-4.flex-grow.mr-2")))
-    #btn_fit.click()
+    title_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div.flex.flex-col.gap-y-2.mb-2.md\:mb-4 > div:nth-child(1) > a")))
+    title_name = title_elem.text.replace(' ', '_')
 
-    close_menu_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div.flex.justify-between.-mx-2.-mt-2 > button")))
-    close_menu_button.click()
+    save_dir = os.path.join(os.getcwd(), title_name)
+
+    os.makedirs(save_dir, exist_ok=True)
 
     while(True):
 
         imgs = wait.until(EC.visibility_of_all_elements_located((By.CLASS_NAME, "img")))
 
-        #img = driver.find_element(By.CLASS_NAME, "img")
-
-        #imgs = driver.find_elements(By.CLASS_NAME, "img")
-
         for img in imgs:
-            #     img.screenshot(f"./frames/{chapter_counter}_{page_counter}.png")
 
             blob_url = img.get_attribute("src")
 
             data_uri = driver.execute_async_script(js, blob_url)
 
             if data_uri:
-                # Обрезаем начало "data:image/jpeg;base64,"
-                # Разделяем по запятой и берем вторую часть
                 base64_data = data_uri.split(',')[1]
                 
-                # Декодируем
                 image_data = base64.b64decode(base64_data)
                 
                 with open(os.path.join(save_dir, f"{chapter_counter}_{page_counter}.png"), "wb") as f:
@@ -99,31 +84,8 @@ try:
 
             page_counter += 1
 
-        #btn = wait.until(EC.visibility_of_element_located((By.NAME, "data-v-d82f1958")))
-        #btn_next = driver.find_element(By.XPATH, "//button[.//path[contains(@d, 'm10 18 6-6-6-6')]]")
-        #buttons = wait.until(EC.presence_of_element_located((By.CLASS_NAME, "button")))
-
-        #buttons = driver.find_elements(By.CLASS_NAME, "button")
-        
-        #print(len(buttons))
-
-        #flex = driver.find_element(By.NAME, "flex")
-
-        # flex = wait.until(EC.presence_of_element_located((By.NAME, "flex")))
-
-        # buttons = flex.find_elements(By.CLASS_NAME, "button")
-        
-        # print(len(buttons))
-
-        #btn_next.click()
-        open_menu_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-chapter > div.reader--header.hide.md--reader-header > div.reader--header-meta > div.reader--meta.menu > svg"))) 
-        open_menu_button.click()
-
         btn_chapter = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#chapter-selector > a:nth-child(3)")))
         btn_chapter.click()
-        
-        close_menu_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div.flex.justify-between.-mx-2.-mt-2 > button")))
-        close_menu_button.click()
 
         chapter_counter += 1
         page_counter = 1
