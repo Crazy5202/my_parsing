@@ -10,18 +10,18 @@ from selenium_stealth import stealth
 import base64
 import os
 
-options = webdriver.ChromeOptions()
-# options.add_argument("--headless")  # Раскомментируйте, чтобы запускать без видимого окна
-driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+def transform_chapter_str(chapter_str: str, digit_count: str = 5) -> str:
+    chapter_num = chapter_str.split(",")[0]
+    diff = digit_count - len(chapter_num)
+    if (diff > 0):
+        chapter_str = "0"*diff + chapter_str
+    return chapter_str
 
-stealth(driver,
-    languages=["en-US", "en"],
-    vendor="Google Inc.",
-    platform="Win32",
-    webgl_vendor="Intel Inc.",
-    renderer="Intel Iris OpenGL Engine",
-    fix_hairline=True,
-)
+def transform_page_str(page_str: str, digit_count: str = 3) -> str:
+    diff = digit_count - len(page_str)
+    if (diff > 0):
+        page_str = "0"*diff + page_str
+    return page_str
 
 # chapter_counter = 1
 page_counter = 1
@@ -43,9 +43,22 @@ js = """
 """
 
 try:
+    options = webdriver.ChromeOptions()
+    # options.add_argument("--headless")  # Раскомментируйте, чтобы запускать без видимого окна
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+    stealth(driver,
+        languages=["en-US", "en"],
+        vendor="Google Inc.",
+        platform="Win32",
+        webgl_vendor="Intel Inc.",
+        renderer="Intel Iris OpenGL Engine",
+        fix_hairline=True,
+    )
     wait = WebDriverWait(driver, 10)
 
-    driver.get("https://mangadex.org/chapter/4696b45a-ac45-48ae-a151-afdf63a5d3ca")
+    driver.get('https://mangadex.org/chapter/61394a0e-6600-44d5-b00f-27fa29a9932b')
+    #driver.get("https://mangadex.org/chapter/4696b45a-ac45-48ae-a151-afdf63a5d3ca")
 
     open_menu_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-chapter > div.reader--header.hide.md--reader-header > div.reader--header-meta > div.reader--meta.menu > svg"))) 
     open_menu_button.click()
@@ -82,7 +95,7 @@ try:
 
         prev_chapter_num = chapter_num
 
-        chapter_dir = os.path.join(save_dir, chapter_num)
+        chapter_dir = os.path.join(save_dir, transform_chapter_str(chapter_num,))
 
         os.makedirs(chapter_dir, exist_ok=True)
 
@@ -99,7 +112,7 @@ try:
                 
                 image_data = base64.b64decode(base64_data)
                 
-                with open(os.path.join(chapter_dir, f"{chapter_num}_{page_counter}.png"), "wb") as f:
+                with open(os.path.join(chapter_dir, f"{transform_page_str(str(page_counter))}.png"), "wb") as f:
                     f.write(image_data)
 
             page_counter += 1
