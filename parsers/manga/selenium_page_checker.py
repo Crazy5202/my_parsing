@@ -24,36 +24,7 @@ def transform_page_str(page_str: str, digit_count: str = 3) -> str:
     return page_str
 
 # chapter_counter = 1
-page_counter = 1
-
-js = """
-    var url = arguments[0];
-    var callback = arguments[1];
-
-    fetch(url)
-        .then(res => res.blob())
-        .then(blob => {
-            var reader = new FileReader();
-            reader.readAsDataURL(blob);
-            reader.onloadend = function() {
-                // callback возвращает строку вида "data:image/jpeg;base64,/9j/4AAQ..."
-                callback(reader.result);
-            }
-        });
-"""
-
-def smooth_scroll(driver, speed=200):
-    last_height = driver.execute_script("return document.body.scrollHeight")
-    current_position = 0
-    
-    while current_position < last_height:
-        driver.execute_script(f"window.scrollBy(0, {speed});")
-        current_position += speed
-        time.sleep(0.1)
-        
-        new_height = driver.execute_script("return document.body.scrollHeight")
-        if new_height > last_height:
-            last_height = new_height
+page_counter = 0
 
 try:
     options = webdriver.ChromeOptions()
@@ -76,18 +47,8 @@ try:
     open_menu_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-chapter > div.reader--header.hide.md--reader-header > div.reader--header-meta > div.reader--meta.menu > svg"))) 
     open_menu_button.click()
 
-    btn_scroll = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div.flex.flex-col.gap-2 > button:nth-child(1)")))
-
-    for i in range(2):
-        btn_scroll.click()
-        time.sleep(1.0)
-
     title_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div.flex.flex-col.gap-y-2.mb-2.md\:mb-4 > div:nth-child(1) > a")))
     title_name = title_elem.text.replace(' ', '_')
-
-    save_dir = os.path.join(os.getcwd(), title_name)
-
-    os.makedirs(save_dir, exist_ok=True)
 
     prev_chapter_num = "0"
 
@@ -108,57 +69,17 @@ try:
 
         prev_chapter_num = chapter_num
 
-        time.sleep(uniform(3.0, 5.0))
-
-        # cur_page_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div:nth-child(3) > div > div > div.relative.z-\[2\].pt-6.pb-1.px-4.bg-accent.cursor-pointer.select-none.rounded-md.trnasition.duration-75.border.border-transparent > span")))
-        # cur_page = int(cur_page_elem.text)
-
-        # while (cur_page < max_page):
-        #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        #     time.sleep(uniform(2.0, 3.0))
-        #     cur_page_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div:nth-child(3) > div > div > div.relative.z-\[2\].pt-6.pb-1.px-4.bg-accent.cursor-pointer.select-none.rounded-md.trnasition.duration-75.border.border-transparent > span")))
-        #     cur_page = int(cur_page_elem.text)
-        smooth_scroll(driver)
-
-        time.sleep(uniform(2.0, 3.0))
-
-        #driver.execute_script("window.scrollTo(0, 0);")
-
-        chapter_dir = os.path.join(save_dir, transform_chapter_str(chapter_num,))
-
-        os.makedirs(chapter_dir, exist_ok=True)
-
-        imgs = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "img")))
+        time.sleep(uniform(1.0, 2.0))
 
         max_page_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-chapter > div.reader--header.hide.ls.md--reader-header > div.reader--header-meta > div.reader--meta.page")))
         max_page = int(max_page_elem.text.split('/')[1])
 
-        if (len(imgs) < max_page):
-            print(f"WARNING: Only parsed {len(imgs)}/{max_page} pages for chapter {chapter_num}!")
-
-        for img in imgs:
-
-            blob_url = img.get_attribute("src")
-
-            data_uri = driver.execute_async_script(js, blob_url)
-
-            if data_uri:
-                base64_data = data_uri.split(',')[1]
-                
-                image_data = base64.b64decode(base64_data)
-                
-                with open(os.path.join(chapter_dir, f"{transform_page_str(str(page_counter))}.png"), "wb") as f:
-                    f.write(image_data)
-
-            page_counter += 1
+        page_counter += max_page
 
         btn_chapter = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#chapter-selector > a:nth-child(3)")))
         btn_chapter.click()
 
-        #chapter_counter += 1
-        page_counter = 1
-
-    print(f"Парсинг закончен на главе {chapter_num}!")
+    print(f"Для {title_name} всего страниц: {page_counter}")
     
 except Exception as e:
     print(f"Произошла ошибка: {e}")
