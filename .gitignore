@@ -3,3 +3,4 @@ mongodb_data/*
 *.txt
 *.png
 .vscode
+.env

@@ -11,7 +11,7 @@ DATA_FOLDER = ''
 if platform == 'android':
     DATA_FOLDER = os.getenv('EXTERNAL_STORAGE') + '/'
 f = open(DATA_FOLDER+'Parsed_book.txt', 'w', encoding="utf-8")
-url = "https://www.royalroad.com/fiction/70174/accidental-war-mage-book-1-stubs-on-march-28th/chapter/1763020/appendix-a-notes-on-geography"
+url = "https://www.royalroad.com/fiction/70934/worldseed-an-isekai-fantasy-litrpg-completed-series/chapter/1266793/book-i-chapter-1"
 counter = 1
 while True:
     response = requests.get(url)
@@ -19,10 +19,8 @@ while True:
     
     pattern = re.compile('Amazon')
 
-    # Peter's suggestion here returns a list of what appear to be strings
     columns = soup.findAll(string=pattern)
 
-    # you can reach the tag using one of the convenience attributes seen here
     pprint(columns[0].__dict__)
 
     pprint(soup)

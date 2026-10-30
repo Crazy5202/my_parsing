@@ -9,6 +9,14 @@ from random import uniform
 from selenium_stealth import stealth
 import base64
 import os
+from dotenv import load_dotenv
+
+CHAPTER_LINK = 'https://mangadex.org/chapter/efcbbed4-5a28-482a-b519-99526207c292'
+START_CHAPTER_NUM = "10"
+
+load_dotenv()
+LOGIN = os.getenv("MG_LOGIN")
+PASSWORD = os.getenv("MG_PASSWORD")
 
 def transform_chapter_str(chapter_str: str, digit_count: str = 5) -> str:
     chapter_num = chapter_str.split(",")[0]
@@ -23,7 +31,6 @@ def transform_page_str(page_str: str, digit_count: str = 3) -> str:
         page_str = "0"*diff + page_str
     return page_str
 
-# chapter_counter = 1
 page_counter = 1
 
 js = """
@@ -55,6 +62,15 @@ def smooth_scroll(driver, speed=200):
         if new_height > last_height:
             last_height = new_height
 
+def smooth_scroll_up(driver, speed=200):
+    while True:
+        current_position = driver.execute_script("return window.pageYOffset")
+        if current_position <= 0:
+            break
+        step = min(speed, current_position)
+        driver.execute_script(f"window.scrollBy(0, -{step});")
+        time.sleep(0.1)
+
 try:
     options = webdriver.ChromeOptions()
     # options.add_argument("--headless")  # Раскомментируйте, чтобы запускать без видимого окна
@@ -70,36 +86,53 @@ try:
     )
     wait = WebDriverWait(driver, 10)
 
-    driver.get('https://mangadex.org/chapter/61394a0e-6600-44d5-b00f-27fa29a9932b')
-    #driver.get("https://mangadex.org/chapter/4696b45a-ac45-48ae-a151-afdf63a5d3ca")
+    driver.get(CHAPTER_LINK)
 
-    open_menu_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-chapter > div.reader--header.hide.md--reader-header > div.reader--header-meta > div.reader--meta.menu > svg"))) 
+    smooth_scroll_up(driver) 
+
+    #Логин
+    login_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#avatar")))
+    login_button.click()
+    time.sleep(2.0)
+
+    login_button = driver.find_element(By.XPATH, '//*[@id="app"]/div[5]/div[2]/div/div[1]/button[3]')
+    login_button.click()
+    time.sleep(2.9)
+
+    login_form = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#username")))
+    login_form.send_keys(LOGIN)
+    time.sleep(1.1)
+
+    login_form = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#password")))
+    login_form.send_keys(PASSWORD)
+    time.sleep(1.2)
+
+    login_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#kc-login")))
+    login_button.click()
+    time.sleep(3.3)
+
+    open_menu_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#app > div.flex.grow.text-color > div.flex.flex-col.grow > div.md-content.grow > div > div.md--reader-chapter > div.reader--header.hide.md--reader-header > div.reader--header-meta > div.reader--meta.menu"))) 
     open_menu_button.click()
 
-    btn_scroll = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div.flex.flex-col.gap-2 > button:nth-child(1)")))
+    btn_scroll = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#app > div.flex.grow.text-color > div.flex.flex-col.grow > div.md-content.grow > div > div.md--reader-menu > div > div.flex.flex-col.gap-2 > button:nth-child(1)")))
 
     for i in range(2):
         btn_scroll.click()
         time.sleep(1.0)
 
-    title_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div.flex.flex-col.gap-y-2.mb-2.md\:mb-4 > div:nth-child(1) > a")))
+    title_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#app > div.flex.grow.text-color > div.flex.flex-col.grow > div.md-content.grow > div > div.md--reader-chapter > div.reader--header.hide.md--reader-header > div.grow > a")))
     title_name = title_elem.text.replace(' ', '_')
 
     save_dir = os.path.join(os.getcwd(), title_name)
 
     os.makedirs(save_dir, exist_ok=True)
 
-    prev_chapter_num = "0"
+    prev_chapter_num = "-1"
 
-    chapter_num = "-1"
+    found_flag = False
 
     while(True):
-
-        chapter_num_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-chapter > div.reader--header.hide.ls.md--reader-header > div.reader--header-meta > div.reader--meta.chapter")))
-
-        # chapter_split = chapter_num_elem.text.split('.', 2)
-
-        # chapter_num = chapter_split[len(chapter_split)-1].replace(' ','').replace('.', ',')
+        chapter_num_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#app > div.flex.grow.text-color > div.flex.flex-col.grow > div.md-content.grow > div > div.md--reader-chapter > div.reader--header.hide.ls.md--reader-header > div.reader--header-meta > div.reader--meta.chapter")))
 
         chapter_num = chapter_num_elem.text.split("Ch.")[1].replace(' ','').replace('.', ',')
 
@@ -108,16 +141,16 @@ try:
 
         prev_chapter_num = chapter_num
 
+        if ((not START_CHAPTER_NUM == "-1") and found_flag == False and chapter_num != START_CHAPTER_NUM):
+            btn_chapter = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#chapter-selector > a:nth-child(3)")))
+            btn_chapter.click()
+            time.sleep(uniform(1.0, 2.0))
+            continue
+
+        found_flag = True
+
         time.sleep(uniform(3.0, 5.0))
 
-        # cur_page_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div:nth-child(3) > div > div > div.relative.z-\[2\].pt-6.pb-1.px-4.bg-accent.cursor-pointer.select-none.rounded-md.trnasition.duration-75.border.border-transparent > span")))
-        # cur_page = int(cur_page_elem.text)
-
-        # while (cur_page < max_page):
-        #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        #     time.sleep(uniform(2.0, 3.0))
-        #     cur_page_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-menu > div > div:nth-child(3) > div > div > div.relative.z-\[2\].pt-6.pb-1.px-4.bg-accent.cursor-pointer.select-none.rounded-md.trnasition.duration-75.border.border-transparent > span")))
-        #     cur_page = int(cur_page_elem.text)
         smooth_scroll(driver)
 
         time.sleep(uniform(2.0, 3.0))
@@ -130,7 +163,7 @@ try:
 
         imgs = wait.until(EC.presence_of_all_elements_located((By.CLASS_NAME, "img")))
 
-        max_page_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#__nuxt > div.flex.flex-grow.text-color > div.flex.flex-col.flex-grow > div.md-content.flex-grow > div > div.md--reader-chapter > div.reader--header.hide.ls.md--reader-header > div.reader--header-meta > div.reader--meta.page")))
+        max_page_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#app > div.flex.grow.text-color > div.flex.flex-col.grow > div.md-content.grow > div > div.md--reader-chapter > div.reader--header.hide.ls.md--reader-header > div.reader--header-meta > div.reader--meta.page")))
         max_page = int(max_page_elem.text.split('/')[1])
 
         if (len(imgs) < max_page):
@@ -152,10 +185,11 @@ try:
 
             page_counter += 1
 
+        print(f"Succcess: parsed {len(imgs)} pages for chapter {chapter_num}")
+
         btn_chapter = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#chapter-selector > a:nth-child(3)")))
         btn_chapter.click()
 
-        #chapter_counter += 1
         page_counter = 1
 
     print(f"Парсинг закончен на главе {chapter_num}!")
