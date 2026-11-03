@@ -12,7 +12,6 @@ import os
 from dotenv import load_dotenv
 
 CHAPTER_LINK = 'https://mangadex.org/chapter/efcbbed4-5a28-482a-b519-99526207c292'
-START_CHAPTER_NUM = "10"
 
 load_dotenv()
 LOGIN = os.getenv("MG_LOGIN")
@@ -72,6 +71,7 @@ def smooth_scroll_up(driver, speed=200):
         time.sleep(0.1)
 
 try:
+    ### SETUP
     options = webdriver.ChromeOptions()
     # options.add_argument("--headless")  # Раскомментируйте, чтобы запускать без видимого окна
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
@@ -90,7 +90,7 @@ try:
 
     smooth_scroll_up(driver) 
 
-    #Логин
+    ### LOGGING IN
     login_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#avatar")))
     login_button.click()
     time.sleep(2.0)
@@ -111,6 +111,7 @@ try:
     login_button.click()
     time.sleep(3.3)
 
+    # MENU OPEN AND SCROLL CHANGE
     open_menu_button = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#app > div.flex.grow.text-color > div.flex.flex-col.grow > div.md-content.grow > div > div.md--reader-chapter > div.reader--header.hide.md--reader-header > div.reader--header-meta > div.reader--meta.menu"))) 
     open_menu_button.click()
 
@@ -120,6 +121,7 @@ try:
         btn_scroll.click()
         time.sleep(1.0)
 
+    ### GETTING TITLE AND CREATING DIR
     title_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#app > div.flex.grow.text-color > div.flex.flex-col.grow > div.md-content.grow > div > div.md--reader-chapter > div.reader--header.hide.md--reader-header > div.grow > a")))
     title_name = title_elem.text.replace(' ', '_')
 
@@ -129,9 +131,8 @@ try:
 
     prev_chapter_num = "-1"
 
-    found_flag = False
-
     while(True):
+        ### GETTING CHAPTER NUM
         chapter_num_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#app > div.flex.grow.text-color > div.flex.flex-col.grow > div.md-content.grow > div > div.md--reader-chapter > div.reader--header.hide.ls.md--reader-header > div.reader--header-meta > div.reader--meta.chapter")))
 
         chapter_num = chapter_num_elem.text.split("Ch.")[1].replace(' ','').replace('.', ',')
@@ -141,22 +142,14 @@ try:
 
         prev_chapter_num = chapter_num
 
-        if ((not START_CHAPTER_NUM == "-1") and found_flag == False and chapter_num != START_CHAPTER_NUM):
-            btn_chapter = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#chapter-selector > a:nth-child(3)")))
-            btn_chapter.click()
-            time.sleep(uniform(1.0, 2.0))
-            continue
-
-        found_flag = True
-
         time.sleep(uniform(3.0, 5.0))
 
+        ### SCROLLING FULLY DOWN
         smooth_scroll(driver)
 
         time.sleep(uniform(2.0, 3.0))
 
-        #driver.execute_script("window.scrollTo(0, 0);")
-
+        ### GETTING CHAPTER NUM AND MAKING DIR
         chapter_dir = os.path.join(save_dir, transform_chapter_str(chapter_num,))
 
         os.makedirs(chapter_dir, exist_ok=True)
@@ -166,9 +159,11 @@ try:
         max_page_elem = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#app > div.flex.grow.text-color > div.flex.flex-col.grow > div.md-content.grow > div > div.md--reader-chapter > div.reader--header.hide.ls.md--reader-header > div.reader--header-meta > div.reader--meta.page")))
         max_page = int(max_page_elem.text.split('/')[1])
 
+        ### CHECKING FOR HAVING PARSED ALL PAGES
         if (len(imgs) < max_page):
             print(f"WARNING: Only parsed {len(imgs)}/{max_page} pages for chapter {chapter_num}!")
 
+        ### GETTING AND SAVING IMAGES
         for img in imgs:
 
             blob_url = img.get_attribute("src")
@@ -185,8 +180,7 @@ try:
 
             page_counter += 1
 
-        print(f"Succcess: parsed {len(imgs)} pages for chapter {chapter_num}")
-
+        ### NEXT CHAPTER
         btn_chapter = wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, "#chapter-selector > a:nth-child(3)")))
         btn_chapter.click()
 
