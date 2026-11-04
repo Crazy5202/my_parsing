@@ -4,7 +4,7 @@ from random import uniform
 import base64
 import os
 
-CHAPTER_LINK = 'https://mangalib.me/ru/1092--aria/read/v6/c26'
+CHAPTER_LINK = 'https://mangalib.me/ru/1092--aria/read/v12/c63'
 
 def transform_chapter_str(chapter_str: str, digit_count: str = 5) -> str:
     chapter_num = chapter_str.split(".")[0]
@@ -42,7 +42,11 @@ async def main():
         #page = await browser.get("https://www.browserscan.net/bot-detection")
         page = await browser.get(CHAPTER_LINK)
 
+        time.sleep(uniform(1.0, 2.0))
+
         await page.scroll_up(500)
+
+        time.sleep(uniform(1.0, 2.0))
 
         cookie_button = await page.find('//*[@id="app"]/div[3]/div/div/div/div[2]/div[2]/button', timeout=10)
         await cookie_button.mouse_click()
@@ -54,21 +58,23 @@ async def main():
         save_dir = os.path.join(os.getcwd(), title_name)
     
         os.makedirs(save_dir, exist_ok=True)
+
+        chapter_num = -1 # На всякий случай, чтобы не получить ошибку в случае запуска на другой странице
     
         while(True):
             ### GETTING CHAPTER NUM OR STOPPING
             chapter_num_elem = await page.find('//*[@id="app"]/div[1]/header/div/a/div[3]', timeout=10)
             if not chapter_num_elem:
-                reviews = await page.find('//*[@id="app"]/div[1]/div[2]/div[7]/div[1]/div/div[5]/span/text()', timeout = 10)
+                reviews = await page.find('//*[@id="app"]/div[1]/div[2]/div[6]/div[1]/div/div[4]/span/text()', timeout = 10)
                 if reviews:
                     break
                 else:
-                    print("ERROR: not found chapter, not found end condition")
+                    print("ERROR: не найдена глава, не найдено условие парсинга")
     
             # EXTRACTING THE CHAPTER NUM OUT OF THE STRING
             chapter_num = chapter_num_elem.text.split("Глава")[1][1:]
     
-            time.sleep(uniform(3.0, 5.0))
+            time.sleep(uniform(1.0, 2.0))
     
             ### GETTING CHAPTER NUM AND MAKING DIR
             chapter_dir = os.path.join(save_dir, transform_chapter_str(chapter_num,))
@@ -95,7 +101,7 @@ async def main():
                     with open(os.path.join(chapter_dir, f"{transform_page_str(str(i))}.png"), "wb") as f:
                         f.write(image_data)
 
-                next_page_btn = await page.find('#app > div.ajp_z3 > main > div > div.bmp_s > div > div:nth-child(2)', timeout = 10)
+                next_page_btn = await page.find(f'//*[@id="app"]/div[1]/main/div/div[{max_page+1}]/div/div[2]', timeout = 10)
                 await next_page_btn.mouse_click()
                 time.sleep(uniform(2.0, 3.0))
         
